@@ -76,13 +76,28 @@
   html,
   body {
     @apply bg-surface text-ink;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Kills the double-tap-to-zoom gesture on touch devices. */
+    touch-action: manipulation;
   }
+
 
   body {
     background-image:
       radial-gradient(60rem 40rem at 15% -10%, var(--app-glow-a), transparent 65%),
       radial-gradient(50rem 35rem at 90% 0%, var(--app-glow-b), transparent 60%);
     background-attachment: fixed;
+  }
+}
+
+/* iOS Safari zooms the page when a focused control renders under 16px, which
+   `user-scalable=no` does not prevent. */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
   }
 }
 

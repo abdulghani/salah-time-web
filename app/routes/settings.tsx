@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Form, redirect, useNavigation, useSubmit } from "react-router";
+import { Form, redirect, useFetcher, useSubmit } from "react-router";
 import type { Route } from "./+types/settings";
 import {
   HIGH_LATITUDE_RULES,
@@ -54,7 +54,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     theme: formData.get("theme") as Settings["theme"],
   });
   applyTheme(saved.theme);
-  return redirect("/");
+  return { saved: true };
 }
 
 type Place = {
@@ -69,8 +69,8 @@ type Place = {
 
 export default function SettingsRoute({ loaderData }: Route.ComponentProps) {
   const { settings, hasLocation } = loaderData;
-  const navigation = useNavigation();
   const submit = useSubmit();
+  const preferences = useFetcher();
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Place[] | null>(null);
@@ -209,8 +209,18 @@ export default function SettingsRoute({ loaderData }: Route.ComponentProps) {
         {error && <p className="text-sm text-warn">{error}</p>}
       </section>
 
-      <Form method="post" className="card space-y-5 p-5">
-        <h2 className="font-medium">Calculation</h2>
+      <preferences.Form
+        method="post"
+        className="card space-y-5 p-5"
+        onChange={(event) => preferences.submit(event.currentTarget)}
+      >
+        <input type="hidden" name="intent" value="preferences" />
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-medium">Calculation</h2>
+          <span className="text-xs text-ink-subtle">
+            {preferences.state === "idle" ? "Saves automatically" : "Saving…"}
+          </span>
+        </div>
 
         <Field label="Method" hint="Twilight angles used for Fajr and Isha">
           <select
@@ -300,18 +310,7 @@ export default function SettingsRoute({ loaderData }: Route.ComponentProps) {
           </div>
         </Field>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            name="intent"
-            value="preferences"
-            disabled={navigation.state === "submitting"}
-            className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-500 disabled:opacity-60"
-          >
-            {navigation.state === "submitting" ? "Saving…" : "Save preferences"}
-          </button>
-        </div>
-      </Form>
+      </preferences.Form>
 
       <Form method="post">
         <button

@@ -10,7 +10,7 @@ import {
   saveSettings,
   type Settings,
 } from "~/lib/settings";
-import { forgetLocationPrompt, requestLocation } from "~/lib/geolocation";
+import { requestLocation } from "~/lib/geolocation";
 import { applyTheme } from "~/lib/theme";
 
 export function meta({}: Route.MetaArgs) {
@@ -28,7 +28,6 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   if (intent === "reset") {
     clearSettings();
-    forgetLocationPrompt();
     return redirect("/settings");
   }
 

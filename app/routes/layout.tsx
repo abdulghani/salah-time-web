@@ -1,14 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useRevalidator } from "react-router";
 import type { Route } from "./+types/layout";
-import {
-  forgetLocationPrompt,
-  hasAskedForLocation,
-  isLocationBlocked,
-  markAskedForLocation,
-  requestLocation,
-  storeLocation,
-} from "~/lib/geolocation";
+import { requestLocation, storeLocation } from "~/lib/geolocation";
 import { loadSettings } from "~/lib/settings";
 import { applyTheme } from "~/lib/theme";
 
@@ -42,8 +35,8 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
     "idle",
   );
 
-  const askForLocation = useCallback(async () => {
-    markAskedForLocation();
+  // Only ever triggered by the banner — nothing prompts on load.
+  async function askForLocation() {
     setLocationState("asking");
     try {
       storeLocation(await requestLocation());
@@ -52,30 +45,6 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
     } catch {
       setLocationState("refused");
     }
-  }, [revalidator]);
-
-  // First visit with nothing saved: ask the browser for the user's position
-  // rather than silently falling back to Makkah.
-  useEffect(() => {
-    if (hasLocation || hasAskedForLocation()) return;
-    let cancelled = false;
-    isLocationBlocked().then((blocked) => {
-      if (cancelled) return;
-      if (blocked) {
-        markAskedForLocation();
-        setLocationState("refused");
-        return;
-      }
-      void askForLocation();
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [hasLocation, askForLocation]);
-
-  function retryLocation() {
-    forgetLocationPrompt();
-    void askForLocation();
   }
 
   return (
@@ -110,7 +79,7 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
       {!hasLocation && location.pathname !== "/settings" && (
         <button
           type="button"
-          onClick={retryLocation}
+          onClick={askForLocation}
           disabled={locationState === "asking"}
           className="mb-4 w-full rounded-xl border border-warn/40 bg-warn/10 px-4 py-3 text-left text-sm text-warn transition hover:bg-warn/20 disabled:cursor-progress disabled:opacity-70"
         >
@@ -123,6 +92,12 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
                 set your location for accurate times
               </span>
               .
+              {locationState === "refused" && (
+                <span className="mt-1 block text-xs opacity-80">
+                  Permission was blocked — allow it in your browser, or pick a city in
+                  Settings.
+                </span>
+              )}
             </>
           )}
         </button>

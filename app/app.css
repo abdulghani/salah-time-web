@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  --font-arabic: "Noto Naskh Arabic", "Amiri", "Geeza Pro", serif;
+
+  /* Semantic tokens. The values here are the light theme; the rules below
+     re-declare the same custom properties for the dark theme, so every
+     `bg-surface` / `text-ink` utility follows the cascade automatically. */
+  --color-surface: oklch(0.98 0.008 200);
+  --color-elevated: oklch(1 0 0 / 0.72);
+  --color-field: oklch(1 0 0);
+  --color-line: oklch(0.55 0.02 260 / 0.18);
+  --color-ink: oklch(0.28 0.025 262);
+  --color-ink-muted: oklch(0.48 0.02 262);
+  --color-ink-subtle: oklch(0.54 0.018 262);
+  --color-accent: oklch(0.5 0.12 168);
+  --color-warn: oklch(0.52 0.12 70);
+
+  --color-night-950: oklch(0.17 0.03 264);
+  --color-night-900: oklch(0.22 0.035 264);
+  --color-brand-400: oklch(0.82 0.13 168);
+  --color-brand-500: oklch(0.64 0.14 168);
+  --color-brand-600: oklch(0.55 0.13 168);
+  --color-gold-300: oklch(0.88 0.11 85);
+  --color-gold-400: oklch(0.78 0.13 82);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --app-glow-a: oklch(0.85 0.09 168 / 0.55);
+    --app-glow-b: oklch(0.86 0.07 285 / 0.5);
+    --star-color: oklch(0.45 0.09 168 / 0.16);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --color-surface: oklch(0.17 0.03 264);
+      --color-elevated: oklch(1 0 0 / 0.05);
+      --color-field: oklch(0.22 0.035 264 / 0.6);
+      --color-line: oklch(1 0 0 / 0.12);
+      --color-ink: oklch(0.96 0.005 260);
+      --color-ink-muted: oklch(0.75 0.02 260);
+      --color-ink-subtle: oklch(0.6 0.02 260);
+      --color-accent: oklch(0.82 0.13 168);
+      --color-warn: oklch(0.88 0.11 85);
+      --color-brand-500: oklch(0.74 0.14 168);
+      --color-brand-600: oklch(0.62 0.13 168);
+      --app-glow-a: oklch(0.32 0.07 168 / 0.5);
+      --app-glow-b: oklch(0.3 0.06 285 / 0.45);
+      --star-color: oklch(0.9 0.05 168 / 0.18);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --color-surface: oklch(0.17 0.03 264);
+    --color-elevated: oklch(1 0 0 / 0.05);
+    --color-field: oklch(0.22 0.035 264 / 0.6);
+    --color-line: oklch(1 0 0 / 0.12);
+    --color-ink: oklch(0.96 0.005 260);
+    --color-ink-muted: oklch(0.75 0.02 260);
+    --color-ink-subtle: oklch(0.6 0.02 260);
+    --color-accent: oklch(0.82 0.13 168);
+    --color-warn: oklch(0.88 0.11 85);
+    --color-brand-500: oklch(0.74 0.14 168);
+    --color-brand-600: oklch(0.62 0.13 168);
+    --app-glow-a: oklch(0.32 0.07 168 / 0.5);
+    --app-glow-b: oklch(0.3 0.06 285 / 0.45);
+    --star-color: oklch(0.9 0.05 168 / 0.18);
+  }
+
+  html,
+  body {
+    @apply bg-surface text-ink;
+  }
+
+  body {
+    background-image:
+      radial-gradient(60rem 40rem at 15% -10%, var(--app-glow-a), transparent 65%),
+      radial-gradient(50rem 35rem at 90% 0%, var(--app-glow-b), transparent 60%);
+    background-attachment: fixed;
+  }
+}
+
+/* Star field for the header band. */
+.pattern-stars {
+  background-image: radial-gradient(
+    circle at center,
+    var(--star-color) 1px,
+    transparent 1.5px
+  );
+  background-size: 22px 22px;
+}
+
+@utility card {
+  @apply rounded-2xl border border-line bg-elevated backdrop-blur-sm;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  70% { transform: scale(1.25); opacity: 0; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

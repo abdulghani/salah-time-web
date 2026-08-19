@@ -54,7 +54,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
     theme: formData.get("theme") as Settings["theme"],
   });
   applyTheme(saved.theme);
-  return { saved: true };
+  return redirect("/");
 }
 
 type Place = {
@@ -67,7 +67,7 @@ type Place = {
   timezone: string;
 };
 
-export default function SettingsRoute({ loaderData, actionData }: Route.ComponentProps) {
+export default function SettingsRoute({ loaderData }: Route.ComponentProps) {
   const { settings, hasLocation } = loaderData;
   const navigation = useNavigation();
   const submit = useSubmit();
@@ -327,9 +327,6 @@ export default function SettingsRoute({ loaderData, actionData }: Route.Componen
           >
             {navigation.state === "submitting" ? "Saving…" : "Save preferences"}
           </button>
-          {actionData?.saved && navigation.state === "idle" && (
-            <span className="text-sm text-accent">Saved</span>
-          )}
         </div>
       </Form>
 

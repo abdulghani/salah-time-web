@@ -23,7 +23,9 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      # rolldown 1.2.5 (via vite 8) never published its darwin-x64 and
+      # linux-arm64-gnu bindings, so `npm ci` can't satisfy the lock file.
+      - run: npm install --no-audit --no-fund
       - run: npm run typecheck
       - name: Build
         run: npm run build

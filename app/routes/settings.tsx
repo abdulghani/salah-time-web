@@ -5,12 +5,12 @@ import {
   HIGH_LATITUDE_RULES,
   METHODS,
   THEMES,
-  browserTimeZone,
   clearSettings,
   loadSettings,
   saveSettings,
   type Settings,
 } from "~/lib/settings";
+import { forgetLocationPrompt, requestLocation } from "~/lib/geolocation";
 import { applyTheme } from "~/lib/theme";
 
 export function meta({}: Route.MetaArgs) {
@@ -28,6 +28,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
   if (intent === "reset") {
     clearSettings();
+    forgetLocationPrompt();
     return redirect("/settings");
   }
 
@@ -111,34 +112,17 @@ export default function SettingsRoute({ loaderData }: Route.ComponentProps) {
     };
   }, [query]);
 
-  function useMyLocation() {
+  async function useMyLocation() {
     setError(null);
-    if (!navigator.geolocation) {
-      setError("This browser does not support geolocation.");
-      return;
-    }
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocating(false);
-        submit(
-          {
-            intent: "location",
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            city: "Current location",
-            country: "",
-            timeZone: browserTimeZone(),
-          },
-          { method: "post" },
-        );
-      },
-      () => {
-        setLocating(false);
-        setError("Location permission was denied.");
-      },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
-    );
+    try {
+      const location = await requestLocation();
+      submit({ intent: "location", ...location }, { method: "post" });
+    } catch {
+      setError("Could not read your location — permission may be blocked.");
+    } finally {
+      setLocating(false);
+    }
   }
 
   return (

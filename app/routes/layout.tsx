@@ -1,6 +1,14 @@
-import { useEffect } from "react";
-import { NavLink, Outlet, useLocation } from "react-router";
+import { useCallback, useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation, useRevalidator } from "react-router";
 import type { Route } from "./+types/layout";
+import {
+  forgetLocationPrompt,
+  hasAskedForLocation,
+  isLocationBlocked,
+  markAskedForLocation,
+  requestLocation,
+  storeLocation,
+} from "~/lib/geolocation";
 import { loadSettings } from "~/lib/settings";
 import { applyTheme } from "~/lib/theme";
 
@@ -28,6 +36,47 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
 
   // Re-applied on every navigation so saving a new theme takes effect at once.
   useEffect(() => applyTheme(theme), [theme]);
+
+  const revalidator = useRevalidator();
+  const [locationState, setLocationState] = useState<"idle" | "asking" | "refused">(
+    "idle",
+  );
+
+  const askForLocation = useCallback(async () => {
+    markAskedForLocation();
+    setLocationState("asking");
+    try {
+      storeLocation(await requestLocation());
+      setLocationState("idle");
+      revalidator.revalidate();
+    } catch {
+      setLocationState("refused");
+    }
+  }, [revalidator]);
+
+  // First visit with nothing saved: ask the browser for the user's position
+  // rather than silently falling back to Makkah.
+  useEffect(() => {
+    if (hasLocation || hasAskedForLocation()) return;
+    let cancelled = false;
+    isLocationBlocked().then((blocked) => {
+      if (cancelled) return;
+      if (blocked) {
+        markAskedForLocation();
+        setLocationState("refused");
+        return;
+      }
+      void askForLocation();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [hasLocation, askForLocation]);
+
+  function retryLocation() {
+    forgetLocationPrompt();
+    void askForLocation();
+  }
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 pb-10 sm:px-6">
@@ -59,9 +108,24 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
       </header>
 
       {!hasLocation && location.pathname !== "/settings" && (
-        <p className="mb-4 rounded-xl border border-warn/40 bg-warn/10 px-4 py-3 text-sm text-warn">
-          Showing times for Makkah — set your location for accurate times.
-        </p>
+        <button
+          type="button"
+          onClick={retryLocation}
+          disabled={locationState === "asking"}
+          className="mb-4 w-full rounded-xl border border-warn/40 bg-warn/10 px-4 py-3 text-left text-sm text-warn transition hover:bg-warn/20 disabled:cursor-progress disabled:opacity-70"
+        >
+          {locationState === "asking" ? (
+            "Waiting for location permission…"
+          ) : (
+            <>
+              Showing times for Makkah —{" "}
+              <span className="font-medium underline underline-offset-2">
+                set your location for accurate times
+              </span>
+              .
+            </>
+          )}
+        </button>
       )}
 
       <nav className="mb-5 flex gap-1 rounded-xl border border-line bg-elevated p-1">
